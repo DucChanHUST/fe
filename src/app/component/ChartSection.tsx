@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { getChartPrice } from "../service/api";
+import axios from "axios";
 
 const Chart = dynamic(() => import("react-apexcharts"), { ssr: false });
 
@@ -83,15 +84,22 @@ const ChartSection = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = require("../../app/priceData.json");
-        const formatted = res.map((item: any) => ({
+        let res = await axios.get(
+          "https://www.binance.com/api/v3/uiKlines?symbol=ETHUSDC&interval=1d&limit=365"
+        );
+        // type == 1h || 4h || 1d, .... 
+        if (!res.data || res.data.length === 0) {
+          res.data = require("../../app/priceData.json");
+        }
+
+        const formatted = res.data.map((item: any) => ({
           x: new Date(item[0]),
-        y: [
-          parseFloat(parseFloat(item[1]).toFixed(2)),
-          parseFloat(parseFloat(item[2]).toFixed(2)),
-          parseFloat(parseFloat(item[3]).toFixed(2)),
-          parseFloat(parseFloat(item[4]).toFixed(2)),
-        ],
+          y: [
+            parseFloat(parseFloat(item[1]).toFixed(2)),
+            parseFloat(parseFloat(item[2]).toFixed(2)),
+            parseFloat(parseFloat(item[3]).toFixed(2)),
+            parseFloat(parseFloat(item[4]).toFixed(2)),
+          ],
         }));
 
         setSeries([{ data: formatted }]);
